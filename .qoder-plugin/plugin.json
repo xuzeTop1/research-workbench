@@ -1,0 +1,20 @@
+{
+  "name": "academic-writing-suite",
+  "displayName": "学术写作工坊",
+  "version": "2.0.0",
+  "description": "Academic research workflow orchestrator: topic selection, experiment design, outline, citation check, language polish, and iterative peer review. Acts as research advisor — never ghostwrites paper text.",
+  "descriptionZh": "学术研究全流程编排：选题→实验设计→骨架→引用审查→润色→审稿循环。定位为研究导师而非代笔人——只给规划、建议和修改点，绝不产出论文正文。",
+  "author": {
+    "name": "User"
+  },
+  "category": "academic",
+  "tags": ["academic-writing", "research-advisor", "peer-review", "citations", "experiment-design"],
+  "skills": [
+    "skills/写作工坊",
+    "skills/论文骨架",
+    "skills/实验设计",
+    "skills/论文润色",
+    "skills/引用审查",
+    "skills/模拟审稿"
+  ]
+}
