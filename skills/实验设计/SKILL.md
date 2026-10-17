@@ -1,8 +1,8 @@
 ---
 name: 实验设计
-version: 2.1.0
-description: Gated experiment design — requires Stage 1 gate pass (confirmed gap + concrete next step + direction comparison). Literature recommendation, dataset/metric/baseline selection. Never produces paper text.
-description_zh: 带入口门禁的实验设计：需 Stage 1 门条件通过（已确认 gap + 确切下一步 + 现有方向对比）。文献推荐（需核验）+ 数据集/指标/基线选择 + 写作指引。绝不产出论文正文。
+version: 2.2.0
+description: Gated experiment design — requires the tool-checked Stage 1 gates (confirmed gap + concrete next step + direction comparison). Literature recommendation, dataset/metric/baseline selection; for prespecified clinical studies an analysis-plan check against the protocol/SAP instead of choosing a "winning" metric. Never produces paper text.
+description_zh: 带入口门禁的实验设计：需 rw.py 校验的 Stage 1 门条件（已确认 gap + 确切下一步 + 现有方向对比）。文献推荐（需核验）+ 数据集/指标/基线选择；预注册临床研究改为对照方案/SAP 的分析计划核对。绝不产出论文正文。
 user-invocable: false
 argument-hint: 基于 research-notes.md 设计实验方案和推荐文献
 ---
@@ -11,18 +11,36 @@ argument-hint: 基于 research-notes.md 设计实验方案和推荐文献
 
 ## 零、入口门禁（不满足则不设计实验）
 
-开工前检查 `research-notes.md`：
+开工前检查 `research-notes.md`。有 shell 时运行 `python3 tools/rw.py check --stage design`，
+原样转述结果——它按「论文骨架」的模板格式计算 G1/G2/G3，不接受自评"通过"：
 
 | 检查项 | 要求 | 不满足时的动作 |
 |--------|------|--------------|
-| Stage 1 门条件 G1/G2/G3 | 全部"通过" | 拒绝设计，输出缺哪一条，退回 Stage 1 补检索/补对比/定下一步 |
-| `deep_research_mode` | `native` 或 `degraded-by-user-request` | 若为 `absent`/缺失 → 停止，交由「论文骨架」输出硬中断块 |
+| Stage 1 门条件 G1/G2/G3 | 全部"通过"（rw.py 计算） | 拒绝设计，输出缺哪一条，退回 Stage 1 补检索/补对比/定下一步 |
+| `deep_research_mode` | `native`、`external-handoff`（且 handoff 文件存在）或 `degraded-by-user-request`（且笔记顶部有降级声明） | 若为 `absent`/`unprobed`/缺失 → 停止，交由「论文骨架」输出硬中断块 |
+| 领域档案 | `domain_profile` 已选；`clinical-prespecified` 已记录 `protocol.primary_endpoint`（逐字取自方案/SAP） | 退回 Stage 0 问询 |
 | 已确认的研究空白 | 至少 1 条带来源的 gap | 输出"要证明这条 gap 需要哪些检索"，等用户 |
 | 与现有研究方向对比 | 已填，延续/转向已判定 | 向用户提一个问询：现有方向是什么，然后再设计 |
 | 下一步可执行 | 已写成一条具体动作 | 给 2-3 个候选动作让用户选，不自行挑一个 |
 
 **理由**：在还没确认"问题真实存在且没人解决"之前排出实验矩阵，产出的是一份看起来很完整
 但方向错误的方案。宁可停在 Stage 1，也不要编一个方案。
+
+## 零之一、领域档案适配 / Profile adaptations
+
+Full rules: `skills/写作工坊/references/domain-profiles.md`.
+
+- `cs-engineering`: this skill as written.
+- `clinical-prespecified`: Stage 2 is an **analysis-plan check**, not a free design. `experiment-plan.md` must
+  quote the protocol's primary endpoint verbatim (`rw.py` checks it) and cover: alignment of every planned
+  analysis with the protocol/SAP; sample-size justification; reference standard and blinding of
+  readers/assessors; handling of indeterminate and missing results; prespecified subgroup and sensitivity
+  analyses; multiplicity; which analyses are post hoc (labelled exploratory). "Choose the main battlefield"
+  does not apply — the main outcome is the protocol's.
+- `systematic-review`: protocol/registration, search sources and dates, full search strategy, selection,
+  risk-of-bias tool, synthesis and certainty-of-evidence approach (PRISMA 2020).
+- `observational`: exposure/outcome definitions, confounder selection (e.g. a causal diagram), missing data,
+  bias analysis (STROBE).
 
 ## 绝对禁止
 
@@ -116,8 +134,9 @@ argument-hint: 基于 research-notes.md 设计实验方案和推荐文献
 承担不了任何一条的实验：在设计阶段就删除、合并或重新设计，不要留到成稿后再删
 （成稿后不得删除已报告的原始数字）。
 
-**比较口径在本阶段确定**：如果某指标上本文不占优，就在本阶段决定不把它设为主战场，
+**比较口径在本阶段确定**（`cs-engineering`）：如果某指标上本文不占优，就在本阶段决定不把它设为主战场，
 并说明本文赢的是哪场比赛。这是叙事选择，不是结果出来之后的删数据理由。
+`clinical-prespecified`：口径与主要终点由方案决定，本节只核对、不选择。
 
 ## 数据集选择
 | 数据集 | 领域 | 规模 | 获取方式 | 选择理由 | 审稿人可能的质疑 |

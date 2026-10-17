@@ -1,6 +1,6 @@
 ---
 name: 科研写作
-version: 2.1.0
+version: 2.2.0
 description: Writing doctrine for scientific manuscripts — editing funnel, given-before-new flow, section recipes, journal selection. Principles only; never substitutes author text.
 description_zh: 科研写作原则层：编辑漏斗、旧信息→新信息推进、各节配方、选刊流程。只给原则与诊断，不产出可粘贴正文。
 user-invocable: false
@@ -51,6 +51,8 @@ argument-hint: 搭骨架、润色、选刊或写审稿回复时调用
 | 结论 | 强化记忆点：解决了什么、证明了什么、为何重要 | 段末突然加入新的自我否定 |
 
 各节的**措辞强度**受「反防御写作」约束：主张先行、限定集中、一处一限定。
+结构与必报内容先看领域档案（`skills/写作工坊/references/domain-profiles.md`）：预注册临床研究、系统综述、
+观察性研究按各自报告指南组织章节，上表只是 `cs-engineering` 的默认配方。
 
 ## 四、图表与引用
 
@@ -80,5 +82,8 @@ argument-hint: 搭骨架、润色、选刊或写审稿回复时调用
 ## 七、冲突处理（重要）
 
 上游 `scientific-writing` 技能要求"改给他看而不是只说"，即直接给出改写后的文本。
-**本仓库覆盖该做法**：所有输出仍为"位置 + 问题类型 + 修改方向"，替换文本由作者自行完成。
+**本仓库默认覆盖该做法**（advisor 模式）：所有输出为"位置 + 问题类型 + 修改方向"，替换文本由作者自行完成。
 只继承其原则（漏斗、旧→新、各节配方、常见失败清单），不继承其代笔行为。
+**Explicit opt-in:** if the user asks for sentence-level edits or replacement text of their own text, the
+workbench switches to `sentence-edits` mode (recorded, scoped, logged; no new claims, numbers or citations) —
+see `skills/写作工坊/references/assistance-modes.md`. Drafting new sections from scratch stays out of scope.

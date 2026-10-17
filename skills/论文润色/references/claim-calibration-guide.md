@@ -5,6 +5,12 @@
 
 > 本文件替代 v2.0.0 的 `defensive-style-guide.md`（单向"绝对性 → 防御性替代"）。
 > 单向规则会把论文写成自我审查报告，故改为双向。
+>
+> **Domain profiles:** for `clinical-prespecified`, `systematic-review` and `observational` studies, express
+> uncertainty with effect sizes and confidence intervals (and certainty of evidence for reviews) rather than
+> hedge words; "significant" only for the prespecified test; no causal verbs for non-randomised comparisons;
+> limitations go wherever the guideline or journal requires, the abstract included. See
+> `skills/写作工坊/references/domain-profiles.md`.
 
 ---
 

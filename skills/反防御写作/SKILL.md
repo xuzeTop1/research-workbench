@@ -1,8 +1,8 @@
 ---
 name: 反防御写作
-version: 2.1.0
-description: Claim-forward narrative rules that reject over-defensive writing, self-weakening phrasing, and hedging stacks. Claim strength is capped by evidence strength.
-description_zh: 主张先行的写作叙事规则：拒绝过度防御性写作、自我削弱措辞、免责声明堆叠。措辞强度以证据强度为上限。
+version: 2.2.0
+description: Claim-forward narrative rules that reject over-defensive writing, self-weakening phrasing, and hedging stacks. Claim strength is capped by evidence strength, and the study's domain profile (e.g. a prespecified clinical protocol) overrides the narrative rules wherever they conflict.
+description_zh: 主张先行的写作叙事规则：拒绝过度防御性写作、自我削弱措辞、免责声明堆叠。措辞强度以证据强度为上限；领域档案（如预注册临床方案）与叙事规则冲突时以档案为准。
 user-invocable: false
 argument-hint: 搭建骨架、润色或修订后复检时调用，检查防御性写作倾向
 ---
@@ -16,7 +16,23 @@ argument-hint: 搭建骨架、润色或修订后复检时调用，检查防御�
 > 叙事原则改编自 MIT 许可的社区技能 `Adkid-Zephyr/anti-defensive-writing-Skill`，
 > 并按本仓库学术护栏加了证据上限（见下节）。
 
-## 一、硬边界（优先级高于本文件所有其他规则）
+## 零、领域档案优先 / Domain profile precedence
+
+Read `domain_profile` from `.writing-progress.json` first (definitions:
+`skills/写作工坊/references/domain-profiles.md`).
+
+- `cs-engineering`: everything below applies as written.
+- `clinical-prespecified` (and `observational` with a prespecified analysis plan): the protocol/SAP fixes the
+  primary endpoint, analysis population and main analysis. **Not applicable to prespecified outcomes:**
+  §三 "打不过的维度不设为比赛项目" and "允许重构故事", and steps 2–6 of §六. Report every prespecified outcome
+  (including null results), disclose deviations, label post hoc analyses as exploratory, and place limitations
+  where the guideline or journal requires (the abstract included, if required). What still applies: tone
+  (no apologetic openers, no self-attack, one filler qualifier per claim) and the evidence ceiling.
+- `systematic-review`: claim strength is capped by the certainty of evidence; the abstract keeps the
+  limitations of the evidence (PRISMA 2020 for Abstracts).
+- `custom`: follow the guideline named in `domain_profile_notes`; when unsure, apply the stricter rule.
+
+## 一、硬边界（优先级高于本文件其他规则；仅次于第零节的领域档案）
 
 | 边界 | 说明 |
 |------|------|
@@ -49,14 +65,15 @@ argument-hint: 搭建骨架、润色或修订后复检时调用，检查防御�
   更高效率、更有意义的权衡。未形成优势的内容不进入主线（但仍保留在实验材料中）。
 - **不写成工作汇报**：不按"先做了什么、后来尝试了什么、哪些失败了"展开。只保留最终
   成立的逻辑：问题为何重要 → 现有方法为何不够 → 本文提供什么新解法 → 证据如何支持。
-- **打不过的维度不设为比赛项目**：某指标不占优时，重新选择更能反映本文价值的任务定义、
+- **打不过的维度不设为比赛项目**（`cs-engineering`）：某指标不占优时，重新选择更能反映本文价值的任务定义、
   评价维度、约束条件或比较口径——但这是**在实验设计阶段**决定的事，不是在结果出来后
-  删数据的理由。
+  删数据的理由。方案预设的结局不适用此条。
 - **优势必须明说**：不期待审稿人自己从表格里发现贡献；主动说明在什么条件下表现最好、
   为什么会出现这种优势、解决了什么实际问题。
 - **控制比较范围**：不追求"所有数据集所有指标全面领先"；说服力来自主张与证据高度一致。
-- **允许重构故事**：现有结果无法支撑原始叙事时，重定义问题、重排贡献、重选主结果，
-  而不是围绕原叙事防守。故事服务于最强证据，不忠于最初设想。
+- **允许重构故事**（仅 `cs-engineering`，且绝不用于方案预设的主要终点）：现有结果无法支撑原始叙事时，
+  重定义问题、重排贡献、重选主结果，而不是围绕原叙事防守。故事服务于最强证据，不忠于最初设想。
+  预注册/有方案的研究：主要终点不变，新故事只能作为明确标注的探索性分析出现。
 
 ## 四、语言模式对照表
 
@@ -81,7 +98,7 @@ argument-hint: 搭建骨架、润色或修订后复检时调用，检查防御�
 场景中有价值 / 排除最可能的替代解释。无法强化主线、容易分散注意力或引出无关争论的实验：
 删除、弱化、移入附录或重新设计（在实验设计阶段决定；成稿后不得删除已报告的原始数字）。
 
-## 六、默认决策顺序（遇到不理想材料时）
+## 六、默认决策顺序（遇到不理想材料时；第 2–6 步仅适用于 `cs-engineering` 或非预设结局）
 
 1. 删除与核心主张无关的内容 → 2. 缩小主张避免无意义正面对撞 → 3. 更换更能体现价值的
 评价维度 → 4. 将结果解释为目标差异或合理权衡 → 5. 重组实验让优势成为叙事中心 →
@@ -111,7 +128,8 @@ argument-hint: 搭建骨架、润色或修订后复检时调用，检查防御�
 
 ## 禁止事项
 
-- ❌ 不产出可粘贴进论文的段落（与仓库核心原则一致，本节所有示例为模式示例）
+- ❌ advisor 模式下不产出可粘贴进论文的段落（本节所有示例为模式示例）；用户明确开启 sentence-edits 模式后，
+  只可对作者已有文字给替换句，规则见 `skills/写作工坊/references/assistance-modes.md`
 - ❌ 不为"更有进攻性"而提高声称强度、隐瞒局限、删改已报告数据
 - ❌ 不生成 rebuttal 措辞稿；只给"这条意见的事实缺口是什么、需要补什么证据"
 - ✅ 只输出：结构诊断 + 措辞模式标记 + 需要作者自行完成的决策

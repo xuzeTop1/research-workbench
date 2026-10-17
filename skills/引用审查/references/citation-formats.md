@@ -77,6 +77,43 @@
 
 ---
 
+## Vancouver / NLM（ICMJE 推荐；多数生物医学期刊）
+
+**期刊**
+```
+[#] Author AA, Author BB, Author CC. Title of article. Abbrev Journal Title. Year;Vol(Issue):pages. doi:xx.xxxx/xxxxx
+```
+
+### 关键规则
+- 作者：姓 + 名首字母，无句点；作者数上限按期刊规定（常见：前 6 位后加 "et al."）——以期刊 Instructions for Authors 为准
+- 刊名用 NLM 缩写（NLM Catalog 可查），无斜体
+- 按正文首次出现顺序编号；正文用方括号、圆括号或上标数字，按期刊要求
+
+## AMA（JAMA 等期刊）
+
+```
+1. Author AA, Author BB, Author CC. Title of article. *Abbrev Journal Title*. Year;Vol(Issue):pages. doi:xx.xxxx/xxxxx
+```
+- 正文引用为上标数字；作者多时的截断规则以 AMA Manual 与期刊要求为准（常见：超过 6 位列前 3 位 + et al.）
+
+## ACM Reference Format（ACM 期刊/会议）
+
+```
+[#] Firstname Lastname, Firstname Lastname, and Firstname Lastname. Year. Title of the paper. In Proceedings of
+the Conference Name (Conf 'YY). ACM, City, Country, pages. https://doi.org/xx.xxxx/xxxxx
+```
+- 以 ACM 官方模板生成的参考文献为准（acmart + BibTeX）；人工核对作者全名、年份位置与 DOI
+
+## APA 7th（社会科学）
+
+```
+Author, A. A., Author, B. B., & Author, C. C. (Year). Title of article. *Journal Name, Vol*(Issue), pages. https://doi.org/xx.xxxx/xxxxx
+```
+
+> 以上均为格式骨架示例，具体细则（作者截断、缩写、标点）以目标期刊的 Instructions for Authors 为准。
+
+---
+
 ## 正文引用标注
 
 | 格式体系 | 文中引用方式 |
@@ -84,6 +121,7 @@
 | GB/T 7714 | `[1]` 或 `[1-3]` 或 `[1,2,5]` |
 | IEEE | `[1]` 或 `[1]–[3]` 或 `[1], [2], [5]` |
 | APA | (Author, Year) 或 Author (Year) |
+| Vancouver / AMA | `[1]`、`(1)` 或上标 ¹，按期刊要求 |
 
 ### 标注位置规则
 

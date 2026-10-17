@@ -1,8 +1,8 @@
 ---
 name: 模拟审稿
-version: 2.1.0
-description: Blinded multi-reviewer simulation executed by isolated subagents, calibrated via web search against similar published papers in the target venue. Outputs P0-P3 blockers only; never predicts acceptance odds or decision tiers, never rewrites.
-description_zh: 子代理隔离执行的脱盲模拟审稿：用 web search 校准目标期刊同类文章与评审关注点，只输出 P0-P3 阻塞点清单，不给录用概率/档位判定，不代写。
+version: 2.2.0
+description: Blinded multi-reviewer simulation. Each reviewer gets a snapshot sandbox outside the project (built by rw.py review-packet), calibrated via web search against similar published papers in the target venue; rw.py aggregate counts P0-P3 deterministically and flags leakage or forbidden verdicts. Never predicts acceptance odds or decision tiers, never rewrites.
+description_zh: 脱盲模拟审稿：rw.py review-packet 为每位审稿人在项目外建快照沙箱（无 .git/进度文件/前轮意见），用 web search 校准目标期刊同类文章与评审关注点；rw.py aggregate 确定性计数 P0-P3 并标出越界与违规表述。不给录用概率/档位判定，不代写。
 user-invocable: false
 argument-hint: 上传稿件进行审稿，或说"再审一轮"
 ---
@@ -31,33 +31,52 @@ argument-hint: 上传稿件进行审稿，或说"再审一轮"
 
 主对话不是合格审稿人：它已经看过作者意图、修改历史和前轮意见，无法真正脱盲。
 
-### 派发规程
+### 派发规程（snapshot-first）
 
-1. 三个审稿人 = **三个互相独立的子代理调用**，同一批次并行发出。
-2. 每个子代理的输入白名单（只给这些，其余一律不给）：
-   - 稿件文件路径（本轮版本的只读快照）
-   - 期刊画像片段：Aims & Scope、格式要求、检索到的该刊评审关注点（见第三节）
-   - 该视角的职责说明（R1 方法 / R2 实验 / R3 写作与贡献）
-   - 输出落盘路径：`reviews/round-N/reviewer-K.md`
-3. 明确禁止下发：其他审稿人的输出、前轮意见原文、`.writing-progress.json`
-   中的作者/机构/项目背景、作者对某条意见的拒绝理由、`polish-suggestions.md`。
-4. 子代理提示里必须写死**只读约束**：除自己的输出文件外不得修改任何文件
-   （被评审稿件、图表、代码、进度文件全部只读），不得访问 `reviews/` 下其他目录。
-5. 汇总：主 Agent 只承担 AE 聚合角色——合并条目、定级、排优先级，
-   **不改写也不软化**审稿人的原始判断；分歧条目全部保留并标注分歧。
+1. **Build the sandboxes with the tool** (shell available):
+
+   ```
+   python3 tools/rw.py review-packet --journal-profile review-calibration.md [--material fig1.png ...]
+   ```
+
+   For each reviewer it creates a fresh directory **outside the project** (system temp by default, neutral
+   name `rw-sbx-…`) containing only: the manuscript snapshot under a neutral name (`input/manuscript.<ext>`, so
+   file names like `paper_v3_after_R2.docx` do not leak history), explicitly listed materials (renamed
+   `material-N`), the journal-profile excerpt, `REVIEWER_BRIEF.md` (role, rules, P0–P3 definitions, the
+   domain-profile checklist) and an empty `output/`. No `.git`, no `.writing-progress.json`, no earlier reviews,
+   no polish suggestions. It records SHA-256 of every input in `reviews/round-N/packet.json`.
+   `.docx` manuscripts with tracked changes or comments are refused (they show the revision history) unless
+   `--allow-docx-revisions` is passed; author metadata is refused unless `--strip-docx-metadata` (blanks it in
+   the snapshot) or `--allow-docx-metadata`.
+2. **Dispatch** three independent subagents in parallel. Each gets exactly one instruction:
+   "Read `<sandbox>/REVIEWER_BRIEF.md` and follow it exactly. Work only inside `<sandbox>`." — nothing about the
+   author, the revision history, earlier rounds or the other reviewers.
+3. **Aggregate** with `python3 tools/rw.py aggregate`: it archives each review to `reviews/round-N/reviewer-K.md`,
+   writes `reviews/round-N.md`, counts P0–P3 from the reviewers' tables, and raises integrity flags for:
+   acceptance probabilities or decision tiers, paths outside the reviewer's sandbox, mentions of
+   workflow-internal files, an edited manuscript snapshot, files written outside `output/`, a missing review.
+   Then it deletes the sandboxes so next-round reviewers cannot find this round's reviews.
+4. 主 Agent 只承担 AE 聚合角色——合并条目、定级、排优先级，**不改写也不软化**审稿人的原始判断；分歧条目全部保留并标注分歧。
+   Treat any integrity flag as "this review may be contaminated": tell the user and rerun that reviewer if needed.
+
+**Honest limits.** Prompt-level isolation cannot stop a subagent that has file tools from opening other paths
+if it decides to; the sandbox therefore lives outside the project, contains nothing workflow-related, and the
+aggregate step flags what it can detect. It cannot detect a reviewer that silently read something and did not
+cite it. The three sandboxes exist at the same time in the temp directory during a round.
 
 ### 隔离方式（按可用性依次尝试）
 
 | 优先级 | 方式 | 做法 |
 |--------|------|------|
-| 1 | **独立 git worktree** | 项目是 git 仓库时，为每位审稿人各开一个 worktree（只含稿件与素材），输出写入 worktree 内路径后回传。彻底切断对工作区其他文件与历史的可见性 |
-| 2 | 临时目录快照 | 非 git 仓库时，把稿件复制到 `reviews/round-N/input-K/` 独立副本，只把该副本路径交给子代理 |
-| 3 | 无子代理能力的平台 | 用户在三个互不相关的**新会话**中分别粘贴"单审稿人提示块"（见下），自行收集三份意见后交回聚合 |
+| 1 | **项目外快照沙箱 + 独立子代理**（`isolation: snapshot`） | 上面的 `review-packet` → 子代理 → `aggregate` |
+| 2 | **三个互不相关的新会话**（`isolation: fresh-sessions`，无子代理能力的平台） | 仍先跑 `review-packet`；用户把每个沙箱里的 `PASTE_PROMPT.md`（文本稿件已内联，Word/PDF 需附 `input/manuscript.*`）分别粘贴进三个新会话，把回复存为各沙箱的 `output/review.md`，再 `aggregate`。没有 shell 时用下面的单审稿人提示块手工完成 |
+| 3 | 都做不到（`isolation: none`） | 必须在输出顶部声明：`⚠️ 本轮未实现评审隔离，脱盲性不完整，以下意见可能被作者上下文污染` |
 
-方式 1/2 都做不到时，必须在输出顶部声明：`⚠️ 本轮未实现评审隔离，脱盲性不完整，
-以下意见可能被作者上下文污染`。
+Why not git worktrees (the v2.1 first choice): a worktree checks out **every** tracked file — including
+`.writing-progress.json` and earlier `reviews/` if they were committed — and shares the full history, so
+`git log` shows every revision message. A snapshot copy does not.
 
-### 单审稿人提示块（方式 3 与子代理提示共用的正文）
+### 单审稿人提示块（无 shell 时手工使用；有 shell 时 `rw.py review-packet` 生成更完整的 REVIEWER_BRIEF.md）
 
 ```
 你是 [目标期刊] 的独立审稿人，视角：[方法/实验/写作与贡献]。
@@ -66,13 +85,14 @@ argument-hint: 上传稿件进行审稿，或说"再审一轮"
 必读材料：[稿件路径/粘贴内容]、[期刊画像]、[该刊近期同类文章标题清单（未核实）]
 
 要求：
+- 只阅读上面给你的材料；不要打开、列出或搜索其他任何路径
 - 每条意见给出：位置（节/页/行/表图编号）→ 问题类型 → 缺什么证据或说明 → 修改方向
   （只给方向，不替作者重写任何句子）
 - 按 P0/P1/P2/P3 分级（定义附后）
 - 禁止：预测录用结果、给出百分比、输出 ACCEPT/MAJOR/REJECT 档位、
   引用其他审稿人或猜测其意见
 - 禁止：编造文献、编造该刊规则；查不到就写"需作者核实"
-- 输出写入 [路径]，除该文件外不得修改任何文件
+- 输出写入 [路径]，除该文件外不得修改任何文件；最后一节 `## Files consulted` 列出你打开过的每个文件
 ```
 
 ## 三、评审关注点校准（派发前做，需要联网搜索）
@@ -105,6 +125,14 @@ argument-hint: 上传稿件进行审稿，或说"再审一轮"
 R3 同时按「反防御写作」的双向标准检查：既不放过超出证据的措辞，也把
 "以免责开头 / hedge 堆叠 / 替审稿人攻击自己"列为需要修复的问题（P2 起）。
 
+**Domain profile checklists** (built into each `REVIEWER_BRIEF.md` by `rw.py`; definitions in
+`skills/写作工坊/references/domain-profiles.md`): `clinical-prespecified` → R2 checks the protocol/SAP and the
+applicable reporting guideline (e.g. STARD 2015, TRIPOD+AI, CONSORT, CLAIM): primary endpoint and analysis as
+prespecified, all prespecified outcomes reported, deviations disclosed, participant flow, reference standard
+and blinding, sample size, missing/indeterminate results, CIs, post hoc analyses labelled, registration and
+ethics. `systematic-review` → PRISMA 2020. `observational` → STROBE. Under these profiles R3 does **not** ask
+for limitations to be removed from places the guideline or journal requires.
+
 ## 五、阻塞点分级（替代档位判定）
 
 | 级别 | 定义 | 判据示例 |
@@ -115,15 +143,19 @@ R3 同时按「反防御写作」的双向标准检查：既不放过超出证�
 | **P3 可选** | 风格与锦上添花 | 语态偏好、句式节奏、可选的补充实验 |
 
 分级只看**问题与证据的关系**，不看提意见的审稿人是谁；同一问题被两位审稿人提出不自动升级。
+`clinical-prespecified` 额外 P0：主要终点被替换或未报告、未披露的方案偏离、缺伦理批准或要求的注册号。
 
 ## 六、输出格式：`reviews/round-N.md`
+
+`python3 tools/rw.py aggregate` writes this file (merged blocker table, verbatim reviewer reports, integrity
+flags, revision checklist). Without a shell, produce the same structure by hand:
 
 ```markdown
 # 模拟评审意见 Round [N]
 
 [顶部声明块]
 - 目标期刊：[已确认期刊名]（校准来源见 review-calibration.md / 或校准缺失声明）
-- 执行方式：子代理隔离（git worktree / 临时快照 / 未隔离）
+- 执行方式：项目外快照沙箱（snapshot）/ 三个新会话（fresh-sessions）/ 未隔离（none）
 - 条目计数：P0 [X] ｜ P1 [Y] ｜ P2 [Z] ｜ P3 [W]
 
 ## 阻塞点总表（作者据此排期）
@@ -165,7 +197,7 @@ R3 同时按「反防御写作」的双向标准检查：既不放过超出证�
     ↓
 用户自行修改 → 说"再审"
     ↓
-Round N+1：新子代理，只给当前稿件快照 + 视角说明（不给前轮意见原文）
+Round N+1：新的 review-packet 沙箱 + 新子代理，只给当前稿件快照 + 视角说明（不给前轮意见原文；前轮沙箱已删除）
     ↓
 按修订核对表检查 P0/P1 是否真的修好（在稿件哪一处看到的）
 ```

@@ -1,5 +1,11 @@
 # 论文结构模板参考
 
+> **Domain profiles:** the templates below are `cs-engineering` defaults. Prespecified clinical studies,
+> systematic reviews and observational studies follow their reporting guideline's structure (STARD 2015,
+> TRIPOD+AI, CONSORT, CLAIM, PRISMA 2020, STROBE …) — see `skills/写作工坊/references/domain-profiles.md`.
+> Where a template below places limitations outside Discussion/Limitations, keep that only if the target
+> journal's own template requires it.
+
 ## 中文理工科期刊（系统设计与实现类）
 
 典型适用：计算机应用研究、计算机系统应用、电化教育研究、现代教育技术
@@ -44,10 +50,10 @@
   6.3 关键指标评测（多子节）
   6.4 端到端性能
   6.5 案例
-  6.6 已知局限
+  6.6 已知局限（仅当目标期刊模板要求放在此处；否则移到讨论/局限节）
 
 7 总结与展望 [~500字]
-  工作总结 → 不足声明 → 未来方向
+  工作总结 → 适用边界（局限详见讨论节；期刊模板要求时才在此重述）→ 未来方向
 
 参考文献 [15-30条]
 ```

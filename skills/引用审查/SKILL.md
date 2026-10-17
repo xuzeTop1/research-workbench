@@ -1,6 +1,6 @@
 ---
 name: 引用审查
-version: 2.1.0
+version: 2.2.0
 description: Citation verification with mandatory user sign-off; format checks require a confirmed target journal. Outputs problem list, never auto-corrects.
 description_zh: 引用文献审查：六维度检查，格式维度需先确认目标期刊。所有结果仅供用户参考，绝不自动修改。每条发现标注需用户决策。
 user-invocable: false
@@ -53,6 +53,8 @@ argument-hint: 上传完成稿件进行引用核查
 - GB/T 7714（中文期刊）
 - IEEE（CS 会议期刊）
 - APA 7th（社会科学）
+- Vancouver / NLM（ICMJE 推荐，多数医学期刊）与 AMA（美国医学会期刊）——`clinical-prespecified`、`systematic-review`、
+  `observational` 档案的常见格式
 - 具体以期刊"Instructions for Authors"检索结果为准，附来源与检索日期
 
 ### 维度 3: 交叉完整性

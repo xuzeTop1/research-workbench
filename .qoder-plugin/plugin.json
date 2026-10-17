@@ -1,14 +1,24 @@
 {
   "name": "academic-writing-suite",
   "displayName": "学术写作工坊",
-  "version": "2.1.0",
-  "description": "Academic research workflow orchestrator: direction intake, deep-research capability probe (hard stop when absent), gated experiment design, anti-defensive outline, journal confirmation, citation audit, bidirectional claim calibration, and subagent-based blinded peer review with P0-P3 blockers. Acts as research advisor — never ghostwrites, never predicts acceptance odds.",
-  "descriptionZh": "学术研究全流程编排：启动问询定写作方向→深度研究能力探针（无工具即硬中断并给出交接 prompt）→门禁后实验设计→反防御骨架→目标期刊确认→引用审查→双向声明校准润色→子代理脱盲审稿（只给 P0-P3 阻塞点，不给录用概率/档位）。定位为研究导师而非代笔人——只给规划、建议和修改点，绝不产出论文正文。",
+  "version": "2.2.0",
+  "description": "Academic research workflow orchestrator: direction intake with study-type domain profiles (CS, prespecified clinical, systematic review, observational), deep-research capability probe (hard stop when absent), gates and stage prerequisites checked by tools/rw.py, journal confirmation, citation audit, bidirectional claim calibration, and blinded peer review in snapshot sandboxes outside the project with P0-P3 blockers. Advisor by default; sentence-level edits only on the user's explicit opt-in. Never predicts acceptance odds.",
+  "descriptionZh": "学术研究全流程编排：启动问询定写作方向与研究类型（领域档案）→深度研究能力探针（无工具即硬中断）→rw.py 校验门禁后实验设计→按档案搭骨架→目标期刊确认→引用审查→双向声明校准润色→项目外快照沙箱脱盲审稿（只给 P0-P3 阻塞点，不给录用概率/档位）。默认只给规划与修改点；用户明确要求时才进入逐句修改模式。",
   "author": {
     "name": "User"
   },
   "category": "academic",
-  "tags": ["academic-writing", "research-advisor", "peer-review", "citations", "experiment-design", "anti-defensive-writing", "claim-calibration"],
+  "tags": [
+    "academic-writing",
+    "anti-defensive-writing",
+    "citations",
+    "claim-calibration",
+    "domain-profiles",
+    "experiment-design",
+    "peer-review",
+    "reporting-guidelines",
+    "research-advisor"
+  ],
   "skills": [
     "./skills/写作工坊",
     "./skills/论文骨架",

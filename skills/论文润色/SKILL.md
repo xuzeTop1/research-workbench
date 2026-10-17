@@ -1,13 +1,19 @@
 ---
 name: 论文润色
-version: 2.1.0
-description: Bidirectional claim-calibration polishing with academic integrity guardrails. Flags both over-claiming and over-defensive writing. Outputs suggestions, not rewritten text.
-description_zh: 双向声明校准润色（带学术护栏）：同时标记过度声称与过度防御/自我削弱。只输出建议清单，不输出修改后全文。
+version: 2.2.0
+description: Bidirectional claim-calibration polishing with academic integrity guardrails. Flags both over-claiming and over-defensive writing. Advisor mode (default) outputs suggestions only; on the user's explicit opt-in (sentence-edits mode) it may give replacement sentences for the author's own text, labelled and logged, never adding claims, numbers or citations.
+description_zh: 双向声明校准润色（带学术护栏）：同时标记过度声称与过度防御/自我削弱。默认只输出建议清单；用户明确开启 sentence-edits 模式后，可对作者原文给替换句（标注并记录日志，不加新主张/数字/引用）。
 user-invocable: false
 argument-hint: 上传用户完成的论文稿件进行语言与声明强度润色
 ---
 
 # 论文润色 — 受限模式
+
+**Mode first:** read `assistance_mode` from `.writing-progress.json`
+(`python3 tools/rw.py mode` prints it). `advisor` (default) → suggestions only, as below. `sentence-edits`
+(recorded opt-in with scope) → the "sentence-edits output" section applies to text inside the recorded scope.
+Rules: `skills/写作工坊/references/assistance-modes.md`. The domain profile still applies (e.g. a prespecified
+primary endpoint is never reworded into another outcome; clinical claims carry CIs instead of hedge words).
 
 润色的核心不只是"把话说保守"，而是**把每处措辞的强度对准它实际拥有的证据**。
 本技能同时检查两个方向的偏离，措辞模式对照见 `references/claim-calibration-guide.md`，
@@ -19,7 +25,7 @@ argument-hint: 上传用户完成的论文稿件进行语言与声明强度润�
 |------|------|
 | 只改语言，不改思想 | 不增删论点、不加强/削弱声明、不改变数据描述内容 |
 | 强度只降不升需证据 | 降低声称强度必须指出"证据缺在哪"；提高强度一律拒绝并说明需要什么证据 |
-| 输出建议，不输出定稿 | 以 diff 建议条目呈现，用户自行决定是否采纳、如何落笔 |
+| 输出建议，不输出定稿 | advisor：以 diff 建议条目呈现，用户自行决定是否采纳、如何落笔；sentence-edits：给"原句→建议句→理由"，只在用户要求时才改文件（建议以修订模式改副本） |
 | 保留作者风格 | 不统一化表达，不做"标准化 AI 味道"的无差异改写 |
 | 不生成新内容 | 不在论文中添加任何原文没有的信息、数据或论述 |
 | 拒绝越界请求 | 用户要求"帮我把这段改得更强""帮我加一句结论"时拒绝并解释原因 |
@@ -47,7 +53,8 @@ argument-hint: 上传用户完成的论文稿件进行语言与声明强度润�
 - ❌ "帮我重新组织这段"（结构性重写 = 代笔）
 - ❌ "帮我把结论写得更 strong"（改变声明强度 = 学术不端风险）
 - ❌ "这个实验结果怎么分析比较好"（数据分析 = 作者的学术判断）
-- ❌ 输出修改后的完整段落（只能给"位置+原文+建议修改为什么"的三点式条目）
+- ❌ advisor 模式下输出修改后的完整段落（只能给"位置+原文+建议修改为什么"的三点式条目）；
+  sentence-edits 模式下仅限授权范围内的作者原文，逐句/逐段给替换文本
 - ❌ 添加原文没有的引用或数据
 - ❌ 为了"读起来自信"而删除会影响结论适用范围的限制说明
 
@@ -89,17 +96,32 @@ argument-hint: 上传用户完成的论文稿件进行语言与声明强度润�
 | 过度防御（措辞 < 证据 / 自我削弱） | | |
 ```
 
+## sentence-edits 输出（仅在用户明确开启后）
+
+```markdown
+# 逐句修改建议 / Sentence edits
+- 模式：sentence-edits（开启于 [时间]，范围：[scope]，依据：用户原话 "[…]"）
+| # | 位置 | 原文 | 建议句 | 理由（问题类型） |
+|---|------|------|--------|------------------|
+| 1 | §4.2 L3 | "该方法完全解决了冷启动问题" | "在本文的评测条件下，该方法缓解了冷启动问题（表 3）" | L1-过度声称：证据只覆盖本文评测条件 |
+```
+
+- 只改授权范围内的作者原文；不新增主张、数字、结果、引用；不改变意思。
+- 缺的内容（过渡、动机）只点名，不编造；用户明确要求时，只能用稿件中已有事实写过渡句，并标 `[AI-drafted]`。
+- 每批写日志：`python3 tools/rw.py log --stage polish --summary "<条数与范围>"`。
+- 修订模式写回 Word 等文件只在用户要求时进行，且改副本，不覆盖原稿。
+
 ## 工作流
 
 ```
-用户提交成稿 → 读取全文
+用户提交成稿 → 读取全文 → 读 assistance_mode 与 domain_profile
   ↓
 Layer 1 扫描：声明强度双向检测（对照 references/claim-calibration-guide.md）
 Layer 2 扫描：信息推进顺序、局限位置、段落职责
 Layer 3 扫描：术语一致性
 Layer 4 扫描：语法/拼写/格式规范
   ↓
-输出 polish-suggestions.md（含双向偏离统计）
+输出 polish-suggestions.md（含双向偏离统计；sentence-edits 模式另附逐句修改表并写日志）
   ↓
 用户自行决定是否修改、如何修改
 ```
